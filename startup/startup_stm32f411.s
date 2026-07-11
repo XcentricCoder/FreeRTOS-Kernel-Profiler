@@ -13,7 +13,7 @@
 .extern _sbss
 .extern _ebss
 
-.section .isr_vector
+.section .isr_vector, "a", %progbits
 .align 2
 
 .word _estack
@@ -40,6 +40,8 @@
 .section .text
 .align 2
 
+.type Reset_Handler, %function
+.thumb_func
 Reset_Handler:
 DataCopy:
     ldr r0, =_sidata
@@ -103,6 +105,8 @@ ZeroBSS:
 .weak SysTick_Handler
 .thumb_set SysTick_Handler, Default_Handler
 
+.type Default_Handler, %function
+.thumb_func
 Default_Handler:
     b .
 

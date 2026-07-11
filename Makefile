@@ -1,16 +1,8 @@
 CC = arm-none-eabi-gcc
 AS = arm-none-eabi-gcc
 
-CFLAGS = -mcpu=cortex-m4 -mthumb -g -O0 -Wall
+
 SIZE = arm-none-eabi-size
-
-CFLAGS += -ffreestanding
-CFLAGS += -ffunction-sections
-CFLAGS += -fdata-sections
-
-LDFLAGS = -T linker/stm32f411.ld \
-		-Wl,-Map=build/firmware.map \
-		-Wl,--gc-sections
 
 C_SOURCES = core/main.c
 ASM_SOURCES = startup/startup_stm32f411.s
@@ -20,6 +12,18 @@ OBJECTS = \
 			build/startup_stm32f411.o
 
 OBJCOPY = arm-none-eabi-objcopy
+ARCH_FLAGS = -mcpu=cortex-m4 -mthumb
+
+CFLAGS = $(ARCH_FLAGS) -g -O0 -Wall
+CFLAGS += -ffreestanding
+CFLAGS += -ffunction-sections
+CFLAGS += -fdata-sections
+
+LDFLAGS = $(ARCH_FLAGS) \
+          -nostdlib \
+		  -T linker/stm32f411.ld \
+		  -Wl,-Map=build/firmware.map \
+		  -Wl,--gc-sections
 
 all:build/firmware.elf \
 	build/firmware.bin \
