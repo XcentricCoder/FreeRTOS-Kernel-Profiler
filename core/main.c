@@ -1,21 +1,27 @@
-int global = 10;
-int uninit;
-const int table[4] = {1, 2, 3, 4};
+#include <stdint.h>
+#include "cycle_counter.h"
 
-volatile const int *p = table;
+volatile uint32_t start;
+volatile uint32_t stop;
+volatile uint32_t elapsed;
 
 int main(void)
 {
-    int local = 5;
+    cycle_counter_init();
 
-    global++;
+    start = cycle_counter_get();
 
-    uninit = local;
+    for(volatile uint32_t i =0; i<1000; i++){
 
-    local += p[2];
-
-    while (1)
-    {
-        local++;
     }
+
+    stop = cycle_counter_get();
+
+    elapsed = stop - start;
+
+    while(1)
+    {
+
+    }
+
 }
