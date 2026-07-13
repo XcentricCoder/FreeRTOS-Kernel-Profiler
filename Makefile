@@ -5,14 +5,16 @@ AS = arm-none-eabi-gcc
 SIZE = arm-none-eabi-size
 
 C_SOURCES = core/main.c \
-			profiler/cycle_counter.c
+			profiler/cycle_counter.c \
+			profiler/profiler.c
 
 ASM_SOURCES = startup/startup_stm32f411.s
 
 OBJECTS = \
 			build/main.o \
 			build/cycle_counter.o \
-			build/startup_stm32f411.o 
+			build/startup_stm32f411.o \
+			build/profiler.o
 
 OBJCOPY = arm-none-eabi-objcopy
 ARCH_FLAGS = -mcpu=cortex-m4 -mthumb
@@ -42,6 +44,9 @@ build/main.o: core/main.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
 build/cycle_counter.o: profiler/cycle_counter.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/profiler.o: profiler/profiler.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
 build/startup_stm32f411.o: startup/startup_stm32f411.s | build 
