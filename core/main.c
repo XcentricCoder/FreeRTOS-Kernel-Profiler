@@ -1,64 +1,79 @@
 #include <stdint.h>
+
+#include "FreeRTOS.h"
+#include "task.h"
+
 #include "cycle_counter.h"
-#include "profiler.h"
+#include "system_panic.h"
 
-uint32_t first_elapsed;
-uint32_t second_elapsed;
-uint32_t third_elapsed;
 
-profiler_record_t test_record;
+volatile uint32_t task_a_counter = 0U;
+volatile uint32_t task_b_counter = 0U;
 
-int main(void)
+
+static void task_a( void * pvParameters )
 {
-    cycle_counter_init();
+    ( void ) pvParameters;
 
-    profiler_init(&test_record);
-
-    //Run 100 iterations
-
-    profiler_start(&test_record);
-
-    
-
-    for(volatile uint32_t i =0;i<100;i++)
+    for( ;; )
     {
+        task_a_counter++;
+    }
+}
 
+
+static void task_b( void * pvParameters )
+{
+    ( void ) pvParameters;
+
+    for( ;; )
+    {
+        task_b_counter++;
+    }
+}
+
+
+int main( void )
+{
+    BaseType_t task_a_status;
+    BaseType_t task_b_status;
+
+    if( !cycle_counter_init() )
+    {
+        system_panic( PANIC_CYCLE_COUNTER_UNAVAILABLE );
     }
 
-    profiler_stop(&test_record);
+    task_a_status = xTaskCreate(
+        task_a,
+        "TaskA",
+        128,
+        NULL,
+        1,
+        NULL
+    );
 
-    first_elapsed = test_record.last_cycles;
-
-    //Run 200 iterations
-
-    profiler_start(&test_record);
-
-    for(volatile uint32_t i =0;i<200;i++)
+    if( task_a_status != pdPASS )
     {
-
+        system_panic( PANIC_MALLOC_FAILED );
     }
 
-    profiler_stop(&test_record);
+    task_b_status = xTaskCreate(
+        task_b,
+        "TaskB",
+        128,
+        NULL,
+        1,
+        NULL
+    );
 
-    second_elapsed = test_record.last_cycles;
-
-    //Run 300 iterations
-
-    profiler_start(&test_record);
-
-    for(volatile uint32_t i =0;i<300;i++)
+    if( task_b_status != pdPASS )
     {
-
+        system_panic( PANIC_MALLOC_FAILED );
     }
 
-    profiler_stop(&test_record);
+    vTaskStartScheduler();
 
-    third_elapsed = test_record.last_cycles;
-
-
-    while(1)
+    for( ;; )
     {
-
     }
-
 }

@@ -4,32 +4,78 @@ AS = arm-none-eabi-gcc
 
 SIZE = arm-none-eabi-size
 
-C_SOURCES = core/main.c \
-			profiler/cycle_counter.c \
-			profiler/profiler.c
+
+C_SOURCES = \
+	core/main.c \
+	core/freertos_heap.c \
+	core/system_panic.c \
+	core/hooks.c \
+	core/memory.c \
+	profiler/cycle_counter.c \
+	profiler/profiler.c \
+	freertos/FreeRTOS-Kernel/tasks.c \
+	freertos/FreeRTOS-Kernel/queue.c \
+	freertos/FreeRTOS-Kernel/list.c \
+	freertos/FreeRTOS-Kernel/timers.c \
+	freertos/FreeRTOS-Kernel/event_groups.c \
+	freertos/FreeRTOS-Kernel/portable/MemMang/heap_4.c \
+	freertos/FreeRTOS-Kernel/portable/GCC/ARM_CM4F/port.c
 
 ASM_SOURCES = startup/startup_stm32f411.s
 
 OBJECTS = \
-			build/main.o \
-			build/cycle_counter.o \
-			build/startup_stm32f411.o \
-			build/profiler.o
+	build/main.o \
+	build/freertos_heap.o \
+	build/system_panic.o \
+	build/hooks.o \
+	build/cycle_counter.o \
+	build/profiler.o \
+	build/tasks.o \
+	build/queue.o \
+	build/list.o \
+	build/timers.o \
+	build/event_groups.o \
+	build/heap_4.o \
+	build/port.o \
+	build/startup_stm32f411.o \
+	build/memory.o
 
 OBJCOPY = arm-none-eabi-objcopy
-ARCH_FLAGS = -mcpu=cortex-m4 -mthumb
 
-CFLAGS = $(ARCH_FLAGS) -g -O0 -Wall
-CFLAGS += -ffreestanding
-CFLAGS += -ffunction-sections
-CFLAGS += -fdata-sections
-CFLAGS += -Iprofiler
+ARCH_FLAGS = \
+	-mcpu=cortex-m4 \
+	-mthumb \
+	-mfpu=fpv4-sp-d16 \
+	-mfloat-abi=hard
+
+INCLUDES = \
+	-Iconfig \
+	-Icore \
+	-Iprofiler \
+	-Ifreertos/FreeRTOS-Kernel/include \
+	-Ifreertos/FreeRTOS-Kernel/portable/GCC/ARM_CM4F
+
+
+
+CFLAGS = \
+	$(ARCH_FLAGS) \
+	-std=c11 \
+	-g \
+	-O0 \
+	-Wall \
+	-Wextra \
+	-ffreestanding \
+	-ffunction-sections \
+	-fdata-sections \
+	$(INCLUDES)
 
 LDFLAGS = $(ARCH_FLAGS) \
           -nostdlib \
 		  -T linker/stm32f411.ld \
 		  -Wl,-Map=build/firmware.map \
-		  -Wl,--gc-sections
+		  -Wl,--gc-sections \
+		  -Wl,--print-memory-usage
+
 
 all:build/firmware.elf \
 	build/firmware.bin \
@@ -40,7 +86,16 @@ all:build/firmware.elf \
 build:
 	mkdir -p build
 
-build/main.o: core/main.c | build 
+build/main.o: core/main.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/freertos_heap.o: core/freertos_heap.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/system_panic.o: core/system_panic.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/hooks.o: core/hooks.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
 build/cycle_counter.o: profiler/cycle_counter.c | build
@@ -49,7 +104,32 @@ build/cycle_counter.o: profiler/cycle_counter.c | build
 build/profiler.o: profiler/profiler.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
-build/startup_stm32f411.o: startup/startup_stm32f411.s | build 
+build/memory.o: core/memory.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/tasks.o: freertos/FreeRTOS-Kernel/tasks.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/queue.o: freertos/FreeRTOS-Kernel/queue.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/list.o: freertos/FreeRTOS-Kernel/list.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/timers.o: freertos/FreeRTOS-Kernel/timers.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/event_groups.o: freertos/FreeRTOS-Kernel/event_groups.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/heap_4.o: freertos/FreeRTOS-Kernel/portable/MemMang/heap_4.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/port.o: freertos/FreeRTOS-Kernel/portable/GCC/ARM_CM4F/port.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+
+build/startup_stm32f411.o: startup/startup_stm32f411.s | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
 build/firmware.elf: $(OBJECTS) | build

@@ -7,7 +7,11 @@ MEMORY
 }
 
 /* Initial Main Stack Pointer */
+
+_Min_Stack_Size = 0x800;
 _estack = ORIGIN(RAM)+ LENGTH(RAM);
+_sstack = _estack - _Min_Stack_Size;
+
 
 SECTIONS 
 {
@@ -69,6 +73,20 @@ SECTIONS
 
     } > RAM 
 
+    .heap(NOLOAD) :
+    {
+        . = ALIGN(8);
+        _sheap = .;
+
+        *(.heap)
+        *(.heap*)
+
+        . = ALIGN(8);
+        _eheap = .;
+
+    } > RAM
+
 
 }
 
+ASSERT(_eheap <= _sstack, "RAM overflow: heap overlaps MSP stack")

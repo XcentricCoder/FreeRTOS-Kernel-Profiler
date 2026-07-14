@@ -2,8 +2,9 @@
 #define CYCLECOUNTER_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
-void cycle_counter_init(void);
+bool cycle_counter_init(void);
 uint32_t cycle_counter_get(void);
 
 
