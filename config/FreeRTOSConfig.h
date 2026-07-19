@@ -8,6 +8,9 @@
 bool cycle_counter_init(void);
 uint32_t cycle_counter_get(void);
 
+void profiler_trace_task_switched_in(void);
+void profiler_trace_task_switched_out(void);
+
 #define configPRIO_BITS                                         4U
 
 #define configUSE_PREEMPTION                                    1
@@ -107,5 +110,10 @@ uint32_t cycle_counter_get(void);
 #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()    cycle_counter_init()
 
 #define portGET_RUN_TIME_COUNTER_VALUE()            cycle_counter_get()
+
+#define traceTASK_SWITCHED_IN()                     profiler_trace_task_switched_in()
+
+#define traceTASK_SWITCHED_OUT()                    profiler_trace_task_switched_out()
+
 
 #endif

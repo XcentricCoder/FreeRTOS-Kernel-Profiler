@@ -12,7 +12,8 @@ C_SOURCES = \
 	core/hooks.c \
 	core/memory.c \
 	profiler/cycle_counter.c \
-	profiler/profiler.c \
+	profiler/timer.c \
+	profiler/task_profiler.c \
 	freertos/FreeRTOS-Kernel/tasks.c \
 	freertos/FreeRTOS-Kernel/queue.c \
 	freertos/FreeRTOS-Kernel/list.c \
@@ -29,7 +30,7 @@ OBJECTS = \
 	build/system_panic.o \
 	build/hooks.o \
 	build/cycle_counter.o \
-	build/profiler.o \
+	build/timer.o \
 	build/tasks.o \
 	build/queue.o \
 	build/list.o \
@@ -38,7 +39,8 @@ OBJECTS = \
 	build/heap_4.o \
 	build/port.o \
 	build/startup_stm32f411.o \
-	build/memory.o
+	build/memory.o \
+	build/task_profiler.o 
 
 OBJCOPY = arm-none-eabi-objcopy
 
@@ -101,7 +103,10 @@ build/hooks.o: core/hooks.c | build
 build/cycle_counter.o: profiler/cycle_counter.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
-build/profiler.o: profiler/profiler.c | build
+build/timer.o: profiler/timer.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/task_profiler.o: profiler/task_profiler.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
 build/memory.o: core/memory.c | build

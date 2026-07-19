@@ -5,6 +5,8 @@
 
 #include "cycle_counter.h"
 #include "system_panic.h"
+#include "task_profiler.h"
+//#include "timer.h"
 
 
 volatile uint32_t task_a_counter = 0U;
@@ -42,6 +44,8 @@ int main( void )
     {
         system_panic( PANIC_CYCLE_COUNTER_UNAVAILABLE );
     }
+
+    task_profiler_init();
 
     task_a_status = xTaskCreate(
         task_a,
