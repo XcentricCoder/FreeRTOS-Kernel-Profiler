@@ -1,4 +1,4 @@
-#include "profiler.h"
+#include "timer.h"
 #include "cycle_counter.h"
 
 void profiler_init(profiler_record_t *record)
