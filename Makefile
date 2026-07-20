@@ -76,7 +76,8 @@ LDFLAGS = $(ARCH_FLAGS) \
 		  -T linker/stm32f411.ld \
 		  -Wl,-Map=build/firmware.map \
 		  -Wl,--gc-sections \
-		  -Wl,--print-memory-usage
+		  -Wl,--print-memory-usage \
+		  -lgcc
 
 
 all:build/firmware.elf \

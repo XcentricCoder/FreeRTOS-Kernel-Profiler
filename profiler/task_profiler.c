@@ -78,7 +78,7 @@ void task_profiler_switch_in(TaskHandle_t task){
     record->last_start_cycles =now;
     record->switch_count++;
 
-};
+}
 
 void task_profiler_switch_out(TaskHandle_t task){
     task_profiler_record_t *record = task_profiler_find_record(task);
@@ -116,5 +116,67 @@ void profiler_trace_task_switched_out(void){
     
 }
 
+uint32_t task_profiler_get_task_count(void){
+    return registered_task_count;
+}
 
-            
+const task_profiler_record_t *task_profiler_get_record(uint32_t index){
+    if(index >= registered_task_count){
+        return NULL;
+    }
+    return &records[index];
+}         
+
+const char *task_profiler_get_task_name(uint32_t index){
+    if(index >= registered_task_count){
+        return NULL;
+    }
+    const task_profiler_record_t *record = task_profiler_get_record(index);
+    const char *name = pcTaskGetName(record->task);
+
+    return name;
+}
+
+uint64_t task_profiler_get_runtime_cycles(uint32_t index){
+    if(index >= registered_task_count){
+        return 0;
+    }
+    const task_profiler_record_t *record = task_profiler_get_record(index);
+
+    uint64_t runtime_cycles = record->total_cycles;
+
+    TaskHandle_t current_task = xTaskGetCurrentTaskHandle();
+
+    if (record->task == current_task){
+        runtime_cycles+= (cycle_counter_get() - record->last_start_cycles);
+    }
+
+    return runtime_cycles;
+
+}
+
+
+uint64_t task_profiler_get_total_runtime_cycles(void){
+
+    uint64_t total_runtime_cycles =0;
+
+    for(uint32_t i =0; i<registered_task_count; i++){
+        total_runtime_cycles += task_profiler_get_runtime_cycles(i);
+    }
+
+    return total_runtime_cycles;
+
+}
+
+uint16_t task_profiler_cpu_usage(uint32_t index){
+    uint64_t task_index = task_profiler_get_runtime_cycles(index);
+    uint64_t task_total = task_profiler_get_total_runtime_cycles();
+
+    if(task_total == 0){
+        return 0;
+    }
+
+    uint16_t cpu_usage = (task_index * 10000ULL)/task_total;
+
+    return cpu_usage;
+}

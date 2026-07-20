@@ -77,6 +77,7 @@ void profiler_trace_task_switched_out(void);
 #define INCLUDE_xTimerPendFunctionCall                          1
 #define INCLUDE_xTaskAbortDelay                                 0
 #define INCLUDE_uxTaskGetStackHighWaterMark                     1
+#define INCLUDE_pcTaskGetName                                   1
 
 #define configASSERT(x)                      \
     do                                       \
