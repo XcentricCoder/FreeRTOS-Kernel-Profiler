@@ -9,6 +9,8 @@
 static task_profiler_record_t records[TASK_PROFILER_MAX_TASKS];
 static uint32_t registered_task_count = 0;
 
+
+
 void task_profiler_init(void){
 
     for(uint32_t i =0; i<TASK_PROFILER_MAX_TASKS;i++){
@@ -180,3 +182,68 @@ uint16_t task_profiler_cpu_usage(uint32_t index){
 
     return cpu_usage;
 }
+
+BaseType_t task_profiler_get_snapshot(uint32_t index, task_profiler_snapshot_t *snapshot){
+    if(index >= registered_task_count || snapshot == NULL){
+        return pdFAIL;
+    }
+
+    uint32_t now;
+    uint64_t task_runtime = 0U;
+    uint64_t total_runtime = 0U;
+    uint32_t switch_count;
+    TaskHandle_t current_task;
+    TaskHandle_t requested_task;
+
+
+    const task_profiler_record_t *record;
+
+
+    taskENTER_CRITICAL();
+
+    record = task_profiler_get_record(index);
+
+    now = cycle_counter_get();
+    current_task = xTaskGetCurrentTaskHandle();
+    requested_task = record->task;
+
+    switch_count = record->switch_count;
+
+    for (uint32_t i =0; i< registered_task_count; i++){
+
+        uint64_t runtime = records[i].total_cycles;
+
+        if (records[i].task == current_task){
+
+            runtime += (uint32_t)(now - records[i].last_start_cycles);
+        }   
+
+        total_runtime += runtime;
+
+        if(i==index){
+            task_runtime = runtime;
+        }
+
+    }
+
+
+
+    taskEXIT_CRITICAL();
+
+   
+
+    snapshot->task = requested_task;
+    snapshot->switch_count = switch_count;
+    snapshot->name = pcTaskGetName(snapshot->task);
+    snapshot->runtime_cycles = task_runtime;
+
+    if (total_runtime == 0U){
+        snapshot->cpu_usage = 0U;
+    }
+    else
+    {
+        snapshot->cpu_usage = (uint16_t)((task_runtime * 10000ULL)/ total_runtime);
+    }
+
+    return pdPASS;
+};
