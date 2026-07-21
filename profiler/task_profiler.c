@@ -1,15 +1,25 @@
 #include "task_profiler.h"
 #include "profiler_hooks.h"
 #include <stdint.h>
-#include <stdbool.h>
 #include "cycle_counter.h"
 
-#define TASK_PROFILER_MAX_TASKS 8
+#define TASK_PROFILER_MAX_TASKS 8U
+
+typedef struct{
+    TaskHandle_t task;
+    uint64_t total_cycles;
+    uint32_t last_start_cycles;
+    uint32_t switch_count;
+
+}task_profiler_record_t;
 
 static task_profiler_record_t records[TASK_PROFILER_MAX_TASKS];
-static uint32_t registered_task_count = 0;
+static uint32_t registered_task_count = 0U;
 
-
+static BaseType_t task_profiler_register_task(TaskHandle_t task);
+static void task_profiler_switch_in(TaskHandle_t task);
+static void task_profiler_switch_out(TaskHandle_t task);
+static const task_profiler_record_t *task_profiler_get_record(uint32_t index);
 
 void task_profiler_init(void){
 
@@ -20,42 +30,41 @@ void task_profiler_init(void){
         records[i].total_cycles=0;
     }
 
-    registered_task_count=0;
+    registered_task_count=0U;
 }
 
-BaseType_t task_profiler_register_task(TaskHandle_t task){
+static BaseType_t task_profiler_register_task(TaskHandle_t task){
 
     if(task == NULL){
         return pdFAIL;
     }
-    else{ 
-        uint32_t i=0;
-            while(i< registered_task_count){
-                if(records[i].task == task){
-                    break;
-                }
-                i++;
-            };
-            if (i < registered_task_count){
-                //
 
-                return pdPASS;
-            }
-            
-            if (registered_task_count >= TASK_PROFILER_MAX_TASKS){
-                return pdFAIL;
-            }
-            records[registered_task_count].last_start_cycles=0;
-            records[registered_task_count].switch_count=0;
-            records[registered_task_count].task=task;
-            records[registered_task_count].total_cycles=0;
-
-            registered_task_count++;
-            
-            return pdPASS;
-        
+    uint32_t i=0;
+    while(i< registered_task_count){
+        if(records[i].task == task){
+            break;
         }
-    
+        i++;
+    }
+
+    if (i < registered_task_count){
+    return pdPASS;
+    }
+
+    if (registered_task_count >= TASK_PROFILER_MAX_TASKS){
+        return pdFAIL;
+    }
+
+        records[registered_task_count].last_start_cycles=0;
+        records[registered_task_count].switch_count=0;
+        records[registered_task_count].task=task;
+        records[registered_task_count].total_cycles=0;
+
+        registered_task_count++;
+
+    return pdPASS;
+
+
 }
 
 static task_profiler_record_t *task_profiler_find_record(TaskHandle_t task){
@@ -70,7 +79,7 @@ static task_profiler_record_t *task_profiler_find_record(TaskHandle_t task){
 }
 
 
-void task_profiler_switch_in(TaskHandle_t task){
+static void task_profiler_switch_in(TaskHandle_t task){
     task_profiler_record_t *record = task_profiler_find_record(task);
     if (record == NULL){
         return;
@@ -82,7 +91,7 @@ void task_profiler_switch_in(TaskHandle_t task){
 
 }
 
-void task_profiler_switch_out(TaskHandle_t task){
+static void task_profiler_switch_out(TaskHandle_t task){
     task_profiler_record_t *record = task_profiler_find_record(task);
 
     if(record == NULL){
@@ -104,10 +113,10 @@ void profiler_trace_task_switched_in(void){
     {
        return;
     }
-    
+
     task_profiler_switch_in(task);
 
-    
+
 }
 
 void profiler_trace_task_switched_out(void){
@@ -115,19 +124,19 @@ void profiler_trace_task_switched_out(void){
 
     task_profiler_switch_out(task);
 
-    
+
 }
 
 uint32_t task_profiler_get_task_count(void){
     return registered_task_count;
 }
 
-const task_profiler_record_t *task_profiler_get_record(uint32_t index){
+static const task_profiler_record_t *task_profiler_get_record(uint32_t index){
     if(index >= registered_task_count){
         return NULL;
     }
     return &records[index];
-}         
+}
 
 const char *task_profiler_get_task_name(uint32_t index){
     if(index >= registered_task_count){
@@ -184,7 +193,7 @@ uint16_t task_profiler_cpu_usage(uint32_t index){
 }
 
 BaseType_t task_profiler_get_snapshot(uint32_t index, task_profiler_snapshot_t *snapshot){
-    if(index >= registered_task_count || snapshot == NULL){
+    if(snapshot == NULL){
         return pdFAIL;
     }
 
@@ -192,31 +201,33 @@ BaseType_t task_profiler_get_snapshot(uint32_t index, task_profiler_snapshot_t *
     uint64_t task_runtime = 0U;
     uint64_t total_runtime = 0U;
     uint32_t switch_count;
+    uint32_t task_count;
     TaskHandle_t current_task;
     TaskHandle_t requested_task;
 
-
-    const task_profiler_record_t *record;
-
-
     taskENTER_CRITICAL();
 
-    record = task_profiler_get_record(index);
+    task_count = registered_task_count;
+
+    if(index >= task_count){
+        taskEXIT_CRITICAL();
+        return pdFAIL;
+    }
 
     now = cycle_counter_get();
     current_task = xTaskGetCurrentTaskHandle();
-    requested_task = record->task;
+    requested_task = records[index].task;
 
-    switch_count = record->switch_count;
+    switch_count = records[index].switch_count;
 
-    for (uint32_t i =0; i< registered_task_count; i++){
+    for (uint32_t i =0; i< task_count; i++){
 
         uint64_t runtime = records[i].total_cycles;
 
         if (records[i].task == current_task){
 
             runtime += (uint32_t)(now - records[i].last_start_cycles);
-        }   
+        }
 
         total_runtime += runtime;
 
@@ -230,7 +241,7 @@ BaseType_t task_profiler_get_snapshot(uint32_t index, task_profiler_snapshot_t *
 
     taskEXIT_CRITICAL();
 
-   
+
 
     snapshot->task = requested_task;
     snapshot->switch_count = switch_count;

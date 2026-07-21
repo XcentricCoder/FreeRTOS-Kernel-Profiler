@@ -12,7 +12,6 @@ C_SOURCES = \
 	core/hooks.c \
 	core/memory.c \
 	profiler/cycle_counter.c \
-	profiler/timer.c \
 	profiler/task_profiler.c \
 	freertos/FreeRTOS-Kernel/tasks.c \
 	freertos/FreeRTOS-Kernel/queue.c \
@@ -30,7 +29,6 @@ OBJECTS = \
 	build/system_panic.o \
 	build/hooks.o \
 	build/cycle_counter.o \
-	build/timer.o \
 	build/tasks.o \
 	build/queue.o \
 	build/list.o \
@@ -102,9 +100,6 @@ build/hooks.o: core/hooks.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
 build/cycle_counter.o: profiler/cycle_counter.c | build
-	$(CC) $(CFLAGS) -c $< -o $@
-
-build/timer.o: profiler/timer.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
 build/task_profiler.o: profiler/task_profiler.c | build

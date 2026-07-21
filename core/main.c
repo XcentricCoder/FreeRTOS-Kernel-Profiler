@@ -13,8 +13,6 @@ volatile uint32_t task_a_counter = 0U;
 volatile uint32_t task_b_counter = 0U;
 
 
-
-
 static void task_a( void * pvParameters )
 {
     ( void ) pvParameters;
